@@ -13,6 +13,15 @@ type GNewsResponse = {
   articles: GNewsArticle[];
 };
 
+type FeedArticle = {
+  title: string;
+  year: number;
+  source: string;
+  summary: string;
+  publishedAt?: string;
+  url?: string;
+};
+
 function trimSummary(text: string, limit = 520) {
   if (text.length <= limit) {
     return text;
@@ -22,14 +31,15 @@ function trimSummary(text: string, limit = 520) {
   return `${clipped.slice(0, lastSpace > 0 ? lastSpace : limit)}…`;
 }
 
-const fallbackArticles = [
+const fallbackArticles: FeedArticle[] = [
   {
     title: "Studio Backlots Open to the Public",
     year: 1991,
     source: "Hollywood Gazette",
     summary:
       "A summer initiative invites residents behind the scenes, turning iconic sound stages into open-air exhibits and reviving interest in practical sets.",
-    url: "https://example.com/hollywood-gazette"
+    url: "https://example.com/hollywood-gazette",
+    publishedAt: undefined
   },
   {
     title: "A New Age of Movie Palaces",
@@ -37,7 +47,8 @@ const fallbackArticles = [
     source: "West Coast Chronicle",
     summary:
       "Historic theaters reopen with restored marquees and live orchestras, anchoring neighborhood nights with a grand, old-world glow.",
-    url: "https://example.com/west-coast-chronicle"
+    url: "https://example.com/west-coast-chronicle",
+    publishedAt: undefined
   },
   {
     title: "Writers Find a Home in Silver Lake",
@@ -45,7 +56,8 @@ const fallbackArticles = [
     source: "City Arts Journal",
     summary:
       "A once-quiet district becomes a hub for screenwriters, cafes, and public readings, shaping a new creative corridor in the city.",
-    url: "https://example.com/city-arts-journal"
+    url: "https://example.com/city-arts-journal",
+    publishedAt: undefined
   },
   {
     title: "Neon Marquees Return to Sunset",
@@ -53,7 +65,8 @@ const fallbackArticles = [
     source: "Pacific Evening",
     summary:
       "A preservation effort revives the glow of classic theater signs, restoring a corridor once nicknamed the electric boulevard.",
-    url: "https://example.com/pacific-evening"
+    url: "https://example.com/pacific-evening",
+    publishedAt: undefined
   },
   {
     title: "Costume Vault Opens for a One-Night Exhibit",
@@ -61,7 +74,8 @@ const fallbackArticles = [
     source: "Studio Ledger",
     summary:
       "An archive of hand-stitched gowns, capes, and uniforms is displayed for the public, honoring generations of craftspeople.",
-    url: "https://example.com/studio-ledger"
+    url: "https://example.com/studio-ledger",
+    publishedAt: undefined
   },
   {
     title: "The Quiet Art of Foley Comes Back in Style",
@@ -69,7 +83,8 @@ const fallbackArticles = [
     source: "Soundstage Review",
     summary:
       "Younger filmmakers embrace analog sound effects again, with workshops filling up for hands-on sessions.",
-    url: "https://example.com/soundstage-review"
+    url: "https://example.com/soundstage-review",
+    publishedAt: undefined
   },
   {
     title: "A Modern Ode to the Studio System",
@@ -77,7 +92,8 @@ const fallbackArticles = [
     source: "Cinema Weekly",
     summary:
       "A new production slate mimics the golden age model, bundling talent into ensembles that rotate across films.",
-    url: "https://example.com/cinema-weekly"
+    url: "https://example.com/cinema-weekly",
+    publishedAt: undefined
   },
   {
     title: "Griffith Park Hosts Outdoor Scoring Night",
@@ -85,7 +101,8 @@ const fallbackArticles = [
     source: "LA Arts Wire",
     summary:
       "Composers perform a live score beneath the stars as classic scenes play on a hillside screen.",
-    url: "https://example.com/la-arts-wire"
+    url: "https://example.com/la-arts-wire",
+    publishedAt: undefined
   },
   {
     title: "Indie Cinemas Add Private Listening Lounges",
@@ -93,7 +110,8 @@ const fallbackArticles = [
     source: "Indie Screen",
     summary:
       "Boutique theaters introduce headphone lounges and curated playlists to extend the screening experience.",
-    url: "https://example.com/indie-screen"
+    url: "https://example.com/indie-screen",
+    publishedAt: undefined
   },
   {
     title: "The Stunt School That Trains the Next Wave",
@@ -101,7 +119,8 @@ const fallbackArticles = [
     source: "Action Journal",
     summary:
       "A dedicated academy expands its program, teaching safe wire work and practical set choreography.",
-    url: "https://example.com/action-journal"
+    url: "https://example.com/action-journal",
+    publishedAt: undefined
   },
   {
     title: "Restoring Hollywood’s Lost Backlot Streets",
@@ -109,7 +128,8 @@ const fallbackArticles = [
     source: "Production Today",
     summary:
       "A reconstruction project revives a classic city block set, focusing on period-correct signage and lighting.",
-    url: "https://example.com/production-today"
+    url: "https://example.com/production-today",
+    publishedAt: undefined
   },
   {
     title: "New Wave Directors Revisit Studio Epics",
@@ -117,7 +137,8 @@ const fallbackArticles = [
     source: "Film Quarterly",
     summary:
       "A generation of directors retools the studio epic format with smaller casts and more intimate pacing.",
-    url: "https://example.com/film-quarterly"
+    url: "https://example.com/film-quarterly",
+    publishedAt: undefined
   },
   {
     title: "A Revival of Hand-Painted Movie Posters",
@@ -125,7 +146,8 @@ const fallbackArticles = [
     source: "Art Deco Press",
     summary:
       "Illustrators return to brushwork and ink textures, bringing gallery-quality posters to boutique screenings.",
-    url: "https://example.com/art-deco-press"
+    url: "https://example.com/art-deco-press",
+    publishedAt: undefined
   }
 ];
 
