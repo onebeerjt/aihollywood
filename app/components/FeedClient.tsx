@@ -35,13 +35,13 @@ export default function FeedClient({ articles }: { articles: FeedArticle[] }) {
   const [visibleCount, setVisibleCount] = useState(initialVisible);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const currentYear = new Date().getFullYear();
-  const [shuffleSeed, setShuffleSeed] = useState(() => Math.random());
+  const [shuffleSeed, setShuffleSeed] = useState(0);
   const randomized = useMemo(
     () => shuffle(articles),
     [articles, shuffleSeed]
   );
   const handleViewChange = (next: ViewMode) => {
-    if (next === "random") {
+    if (next === "random" || next === "by-decade") {
       setShuffleSeed(Math.random());
     }
     setView(next);
@@ -82,6 +82,10 @@ export default function FeedClient({ articles }: { articles: FeedArticle[] }) {
   useEffect(() => {
     setVisibleCount(initialVisible);
   }, [view, randomized]);
+
+  useEffect(() => {
+    setShuffleSeed(Math.random());
+  }, []);
 
   useEffect(() => {
     const node = sentinelRef.current;
