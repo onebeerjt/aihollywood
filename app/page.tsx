@@ -194,11 +194,37 @@ function mergeFallback<T extends { title: string; year: number }>(
   return merged;
 }
 
+function ensureMinStories(primary: FeedArticle[], minCount = 24) {
+  const merged = mergeFallback(primary, fallbackArticles, minCount);
+  if (merged.length >= minCount) {
+    return merged;
+  }
+
+  const padded = [...merged];
+  let i = 0;
+
+  while (padded.length < minCount) {
+    const base = fallbackArticles[i % fallbackArticles.length];
+    const cut = Math.floor(i / fallbackArticles.length) + 1;
+    padded.push({
+      ...base,
+      title: `${base.title} (Archive Cut ${cut})`,
+      source: `${base.source} Archive`,
+      year: Math.max(1950, base.year - cut),
+      publishedAt: undefined,
+      url: undefined
+    });
+    i += 1;
+  }
+
+  return padded;
+}
+
 async function getArticles() {
   const apiKey = process.env.GNEWS_API_KEY;
 
   if (!apiKey) {
-    return fallbackArticles;
+    return ensureMinStories(fallbackArticles);
   }
 
   const baseParams = {
@@ -242,7 +268,7 @@ async function getArticles() {
 
     const merged = responses.flat();
     if (merged.length === 0) {
-      return fallbackArticles;
+      return ensureMinStories(fallbackArticles);
     }
 
     const seen = new Set<string>();
@@ -274,9 +300,9 @@ async function getArticles() {
           url: normalizeUrl(article.url)
         };
       });
-    return mergeFallback(normalized, fallbackArticles);
+    return ensureMinStories(normalized);
   } catch {
-    return fallbackArticles;
+    return ensureMinStories(fallbackArticles);
   }
 }
 
