@@ -1,3 +1,7 @@
+"use client";
+
+import { useMemo, useState } from "react";
+
 type ArticleProps = {
   title: string;
   year: number;
@@ -6,34 +10,40 @@ type ArticleProps = {
   url?: string;
 };
 
-export default function Article({
-  title,
-  year,
-  source,
-  summary,
-  url
-}: ArticleProps) {
+export default function Article({ title, year, source, summary, url }: ArticleProps) {
+  const [expanded, setExpanded] = useState(false);
+  const wordCount = useMemo(() => summary.split(/\s+/).filter(Boolean).length, [summary]);
+  const isLong = wordCount > 120;
+
   return (
     <article className="article">
       <header className="article__header">
         <p className="article__eyebrow">{source}</p>
-        <h1 className="article__title">{title}</h1>
+        <h2 className="article__title">{title}</h2>
         <p className="article__meta">{year}</p>
       </header>
-      <p className="article__summary">{summary}</p>
+
+      <div className="article__body">
+        <p className={`article__summary ${expanded ? "is-expanded" : ""}`}>{summary}</p>
+        {isLong ? (
+          <button
+            type="button"
+            className="article__toggle"
+            onClick={() => setExpanded((value) => !value)}
+          >
+            {expanded ? "Show less" : "Continue reading"}
+          </button>
+        ) : null}
+      </div>
+
       <footer className="article__footer">
         <span className="article__rule" aria-hidden />
         {url ? (
-          <a
-            className="article__link"
-            href={url}
-            target="_blank"
-            rel="noreferrer"
-          >
-            Read on source
+          <a className="article__link" href={url} target="_blank" rel="noreferrer">
+            Source
           </a>
         ) : (
-          <span className="article__note">Swipe for the next issue</span>
+          <span className="article__note">Archive excerpt</span>
         )}
       </footer>
     </article>

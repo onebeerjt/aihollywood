@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Article from "./Article";
 
 type FeedArticle = {
+  id: string;
   title: string;
   year: number;
   source: string;
@@ -30,65 +31,61 @@ function shuffle<T>(items: T[]) {
 }
 
 export default function FeedClient({ articles }: { articles: FeedArticle[] }) {
-  const initialVisible = 3;
+  const initialVisible = 6;
+  const batchSize = 3;
   const [view, setView] = useState<ViewMode>("this-year");
+  const [seed, setSeed] = useState(0);
   const [visibleCount, setVisibleCount] = useState(initialVisible);
+  const [selectedDecade, setSelectedDecade] = useState<string | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
-  const currentYear = new Date().getFullYear();
-  const [shuffleSeed, setShuffleSeed] = useState(0);
-  const randomized = useMemo(
-    () => shuffle(articles),
-    [articles, shuffleSeed]
-  );
-  const handleViewChange = (next: ViewMode) => {
-    if (next === "random" || next === "by-decade") {
-      setShuffleSeed(Math.random());
-    }
-    setView(next);
-  };
 
-  const filtered = useMemo(() => {
+  const currentYear = new Date().getFullYear();
+
+  const decades = useMemo(
+    () =>
+      Array.from(new Set(articles.map((article) => `${Math.floor(article.year / 10) * 10}s`))).sort(
+        (a, b) => Number(b.slice(0, 4)) - Number(a.slice(0, 4))
+      ),
+    [articles]
+  );
+
+  useEffect(() => {
+    if (decades.length > 0 && !selectedDecade) {
+      setSelectedDecade(decades[0]);
+    }
+  }, [decades, selectedDecade]);
+
+  const randomized = useMemo(() => shuffle(articles), [articles, seed]);
+
+  const feed = useMemo(() => {
     if (view === "this-year") {
       const thisYear = randomized.filter((article) => article.year === currentYear);
       const rest = randomized.filter((article) => article.year !== currentYear);
-      if (thisYear.length <= 1) {
-        return randomized;
-      }
-      return [...shuffle(thisYear), ...shuffle(rest)];
+      return [...thisYear, ...rest];
     }
 
-    if (view === "random") {
-      return randomized;
+    if (view === "by-decade" && selectedDecade) {
+      const baseYear = Number(selectedDecade.slice(0, 4));
+      return randomized.filter((article) => article.year >= baseYear && article.year <= baseYear + 9);
     }
 
     return randomized;
-  }, [currentYear, randomized, view]);
+  }, [currentYear, randomized, selectedDecade, view]);
 
-  const visibleArticles = useMemo(
-    () => filtered.slice(0, visibleCount),
-    [filtered, visibleCount]
-  );
-
-  const byDecade = useMemo(() => {
-    const groups: Record<string, FeedArticle[]> = {};
-    visibleArticles.forEach((article) => {
-      const decade = `${Math.floor(article.year / 10) * 10}s`;
-      groups[decade] = groups[decade] || [];
-      groups[decade].push(article);
-    });
-
-    return Object.entries(groups)
-      .map(([decade, items]) => [decade, shuffle(items)] as const)
-      .sort((a, b) => b[0].localeCompare(a[0]));
-  }, [visibleArticles]);
+  const visibleArticles = useMemo(() => feed.slice(0, visibleCount), [feed, visibleCount]);
 
   useEffect(() => {
     setVisibleCount(initialVisible);
-  }, [view, randomized]);
+  }, [view, selectedDecade, seed]);
 
-  useEffect(() => {
-    setShuffleSeed(Math.random());
-  }, []);
+  const handleViewChange = (next: ViewMode) => {
+    setView(next);
+    setSeed(Math.random());
+    if (next === "by-decade" && decades.length > 0) {
+      const randomDecade = decades[Math.floor(Math.random() * decades.length)];
+      setSelectedDecade(randomDecade);
+    }
+  };
 
   useEffect(() => {
     const node = sentinelRef.current;
@@ -98,68 +95,63 @@ export default function FeedClient({ articles }: { articles: FeedArticle[] }) {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        const entry = entries[0];
-        if (!entry?.isIntersecting) {
+        if (!entries[0]?.isIntersecting) {
           return;
         }
-        setVisibleCount((prev) =>
-          prev >= filtered.length ? prev : Math.min(prev + 1, filtered.length)
-        );
+        setVisibleCount((count) => Math.min(count + batchSize, feed.length));
       },
-      { rootMargin: "200px" }
+      { rootMargin: "220px" }
     );
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [filtered.length]);
+  }, [feed.length]);
 
   return (
     <main className="feed">
-      <div className="feed__controls">
-        {Object.entries(viewLabels).map(([key, label]) => {
-          const isActive = view === key;
-          return (
-            <button
-              key={key}
-              className={`feed__control ${isActive ? "is-active" : ""}`}
-              type="button"
-              onClick={() => handleViewChange(key as ViewMode)}
-            >
-              {label}
-            </button>
-          );
-        })}
-        {view === "random" ? (
-          <span className="feed__control-info">Shuffle</span>
-        ) : null}
-      </div>
-
-      {view === "by-decade"
-        ? byDecade.flatMap(([decade, decadeArticles]) => [
-            <section className="feed__item feed__decade" key={`${decade}-title`}>
-              <div className="decade-card">
-                <p className="decade-card__label">Edition</p>
-                <h2 className="decade-card__title">{decade}</h2>
-                <p className="decade-card__note">Swipe to browse stories</p>
-              </div>
-            </section>,
-            ...decadeArticles.map((article) => (
-              <section
-                className="feed__item"
-                key={`${decade}-${article.title}-${article.year}`}
+      <header className="feed__header">
+        <div className="feed__controls" role="tablist" aria-label="Feed Views">
+          {Object.entries(viewLabels).map(([key, label]) => {
+            const isActive = view === key;
+            return (
+              <button
+                key={key}
+                className={`feed__control ${isActive ? "is-active" : ""}`}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => handleViewChange(key as ViewMode)}
               >
-                <Article {...article} />
-              </section>
-            ))
-          ])
-        : visibleArticles.map((article) => (
-            <section
-              className="feed__item"
-              key={`${article.title}-${article.year}`}
-            >
-              <Article {...article} />
-            </section>
-          ))}
+                {label}
+              </button>
+            );
+          })}
+        </div>
+        {view === "by-decade" ? (
+          <div className="feed__decade-pills" aria-label="Choose decade">
+            {decades.map((decade) => (
+              <button
+                key={decade}
+                type="button"
+                className={`feed__decade-pill ${selectedDecade === decade ? "is-active" : ""}`}
+                onClick={() => {
+                  setSelectedDecade(decade);
+                  setSeed(Math.random());
+                }}
+              >
+                {decade}
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </header>
+
+      <section className="feed__list">
+        {visibleArticles.map((article) => (
+          <Article key={article.id} {...article} />
+        ))}
+      </section>
+
       <div className="feed__sentinel" ref={sentinelRef} aria-hidden />
     </main>
   );
